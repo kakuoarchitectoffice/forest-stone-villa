@@ -1,0 +1,508 @@
+:root {
+  color-scheme: dark;
+  --background: #050605;
+  --ink: #f6f2eb;
+  --muted: rgba(246, 242, 235, 0.72);
+  --quiet: rgba(246, 242, 235, 0.5);
+  --line: rgba(246, 242, 235, 0.22);
+  --stone: #b9b2a4;
+  --moss: #7f9075;
+  --header-space: clamp(24px, 4vw, 64px);
+  --side-space: clamp(24px, 6vw, 96px);
+  --bottom-space: clamp(52px, 8vh, 98px);
+  font-family:
+    "Hiragino Sans", "Yu Gothic", "YuGothic", "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--ink);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.video-stage,
+.scroll-video,
+.poster-fallback,
+.ambient-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-stage {
+  z-index: 0;
+  overflow: hidden;
+  background: #050605;
+}
+
+.scroll-video,
+.poster-fallback {
+  object-fit: cover;
+  object-position: center center;
+}
+
+.scroll-video {
+  z-index: 1;
+  display: block;
+}
+
+.poster-fallback {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 800ms ease;
+}
+
+.poster-fallback.is-visible {
+  opacity: 1;
+}
+
+.ambient-overlay {
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(5, 6, 5, 0.68) 0%, rgba(5, 6, 5, 0.24) 38%, rgba(5, 6, 5, 0.3) 100%),
+    linear-gradient(0deg, rgba(5, 6, 5, 0.78) 0%, rgba(5, 6, 5, 0.08) 44%, rgba(5, 6, 5, 0.46) 100%);
+}
+
+.site-header {
+  position: fixed;
+  top: var(--header-space);
+  left: var(--side-space);
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  color: rgba(246, 242, 235, 0.68);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.site-header p {
+  margin: 0;
+}
+
+.scene-caption {
+  position: fixed;
+  left: var(--side-space);
+  bottom: var(--bottom-space);
+  z-index: 4;
+  width: min(480px, calc(100vw - 160px));
+  animation: caption-in 620ms ease both;
+}
+
+.scene-caption__count {
+  margin: 0 0 18px;
+  color: var(--quiet);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  line-height: 1;
+}
+
+.scene-caption h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(2.1rem, 5vw, 5.9rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.scene-caption p:last-child {
+  width: min(420px, 100%);
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: clamp(0.84rem, 1.1vw, 0.98rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 2;
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.scene-navigation {
+  position: fixed;
+  right: clamp(22px, 4vw, 58px);
+  top: 50%;
+  z-index: 5;
+  display: grid;
+  gap: 13px;
+  transform: translateY(-50%);
+}
+
+.scene-navigation__item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 14px;
+  min-width: 142px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(246, 242, 235, 0.44);
+  cursor: pointer;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+  transition:
+    color 220ms ease,
+    transform 220ms ease;
+}
+
+.scene-navigation__item::before {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1px;
+  margin-bottom: 2px;
+  background: rgba(246, 242, 235, 0.2);
+  content: "";
+  transform: scaleX(0.24);
+  transform-origin: left center;
+  transition:
+    background 220ms ease,
+    transform 220ms ease;
+}
+
+.scene-navigation__item:hover,
+.scene-navigation__item:focus-visible,
+.scene-navigation__item[aria-current="step"] {
+  color: rgba(246, 242, 235, 0.92);
+  outline: none;
+}
+
+.scene-navigation__item:hover::before,
+.scene-navigation__item:focus-visible::before,
+.scene-navigation__item[aria-current="step"]::before {
+  background: rgba(246, 242, 235, 0.76);
+  transform: scaleX(1);
+}
+
+.scene-navigation__item[aria-current="step"] {
+  transform: translateX(-6px);
+}
+
+.mobile-scene-indicator {
+  position: fixed;
+  right: 22px;
+  bottom: 26px;
+  z-index: 6;
+  display: none;
+  gap: 7px;
+}
+
+.mobile-scene-indicator span {
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgba(246, 242, 235, 0.42);
+  border-radius: 50%;
+}
+
+.mobile-scene-indicator span.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.scene-controls {
+  position: fixed;
+  right: var(--side-space);
+  bottom: var(--bottom-space);
+  z-index: 5;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.text-control {
+  min-width: 76px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(246, 242, 235, 0.36);
+  background: transparent;
+  color: rgba(246, 242, 235, 0.82);
+  cursor: pointer;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.text-control:hover,
+.text-control:focus-visible {
+  border-color: var(--ink);
+  color: var(--ink);
+  outline: none;
+}
+
+.text-control:disabled {
+  border-color: rgba(246, 242, 235, 0.14);
+  color: rgba(246, 242, 235, 0.3);
+  cursor: default;
+}
+
+.page-flow {
+  position: relative;
+  z-index: 2;
+}
+
+.scroll-sequence {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-progress {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  width: 1px;
+  height: 100svh;
+  background: linear-gradient(180deg, var(--stone), var(--moss));
+  opacity: 0.76;
+  pointer-events: none;
+  transform-origin: top center;
+}
+
+.contact-section {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  place-items: center;
+  padding: clamp(64px, 10vw, 144px) var(--side-space);
+  background:
+    linear-gradient(90deg, rgba(5, 6, 5, 0.94), rgba(5, 6, 5, 0.84)),
+    linear-gradient(180deg, rgba(5, 6, 5, 0.22), #050605 38%, #050605 100%);
+}
+
+.contact-section::before {
+  position: absolute;
+  inset: clamp(22px, 4vw, 64px);
+  border: 1px solid rgba(246, 242, 235, 0.16);
+  content: "";
+  pointer-events: none;
+}
+
+.contact-section__inner {
+  width: min(760px, 100%);
+  text-align: center;
+}
+
+.contact-section__kicker {
+  margin: 0 0 30px;
+  color: var(--quiet);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+
+.contact-section h2 {
+  margin: 0;
+  font-family: "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(2rem, 5vw, 5rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.contact-section p:not(.contact-section__kicker) {
+  margin: 28px auto 0;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  line-height: 2;
+}
+
+.contact-section__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 178px;
+  min-height: 46px;
+  margin-top: 44px;
+  border: 1px solid rgba(246, 242, 235, 0.38);
+  color: var(--ink);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease;
+}
+
+.contact-section__button:hover,
+.contact-section__button:focus-visible {
+  border-color: var(--ink);
+  background: rgba(246, 242, 235, 0.1);
+  outline: none;
+}
+
+.reduced-sequence {
+  position: relative;
+  z-index: 3;
+}
+
+.reduced-scene {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  align-content: end;
+  padding: 0 var(--side-space) var(--bottom-space);
+}
+
+.reduced-scene p {
+  margin: 0 0 18px;
+  color: var(--quiet);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+}
+
+.reduced-scene h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(2rem, 9vw, 5.6rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.reduced-scene span {
+  max-width: 440px;
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 2;
+}
+
+.is-reduced-motion .ambient-overlay {
+  background:
+    linear-gradient(90deg, rgba(5, 6, 5, 0.72), rgba(5, 6, 5, 0.34)),
+    linear-gradient(0deg, rgba(5, 6, 5, 0.86), rgba(5, 6, 5, 0.14), rgba(5, 6, 5, 0.52));
+}
+
+@media (max-width: 960px) {
+  .scene-caption {
+    width: min(480px, calc(100vw - 112px));
+  }
+
+  .scene-navigation {
+    display: none;
+  }
+
+  .mobile-scene-indicator {
+    display: flex;
+  }
+
+  .scene-controls {
+    right: auto;
+    left: var(--side-space);
+    bottom: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --header-space: 22px;
+    --side-space: 22px;
+    --bottom-space: 86px;
+  }
+
+  .site-header {
+    gap: 6px;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+  }
+
+  .scene-caption {
+    width: calc(100vw - 44px);
+  }
+
+  .scene-caption h1,
+  .reduced-scene h1 {
+    max-width: 11ch;
+    font-size: clamp(2rem, 14vw, 4.1rem);
+  }
+
+  .scene-caption p:last-child,
+  .reduced-scene span {
+    max-width: 300px;
+    font-size: 0.82rem;
+    line-height: 1.9;
+  }
+
+  .text-control {
+    min-width: 68px;
+    font-size: 0.68rem;
+  }
+
+  .contact-section {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .contact-section::before {
+    inset: 16px;
+  }
+
+  .contact-section p:not(.contact-section__kicker) br {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
