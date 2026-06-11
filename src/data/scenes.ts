@@ -5,6 +5,7 @@ export type Scene = {
   copy: string;
   start: number;
   end: number;
+  anchor: number;
 };
 
 export const scenes: Scene[] = [
@@ -15,6 +16,7 @@ export const scenes: Scene[] = [
     copy: "森に寄り添う、石と木の邸宅。",
     start: 0.0,
     end: 0.05,
+    anchor: 0.0,
   },
   {
     id: "entrance",
@@ -23,6 +25,7 @@ export const scenes: Scene[] = [
     copy: "静けさの奥へ導く、深い軒下と石のアプローチ。",
     start: 0.05,
     end: 0.17,
+    anchor: 0.105,
   },
   {
     id: "living",
@@ -31,6 +34,7 @@ export const scenes: Scene[] = [
     copy: "火と石が、森の時間を受け止める。",
     start: 0.17,
     end: 0.35,
+    anchor: 0.225,
   },
   {
     id: "dining",
@@ -39,6 +43,7 @@ export const scenes: Scene[] = [
     copy: "自然を背景に、暮らしの中心を据える。",
     start: 0.35,
     end: 0.56,
+    anchor: 0.435,
   },
   {
     id: "bathroom",
@@ -47,6 +52,7 @@ export const scenes: Scene[] = [
     copy: "中庭を抜け、静かな水まわりへ。",
     start: 0.56,
     end: 0.73,
+    anchor: 0.61,
   },
   {
     id: "bedroom",
@@ -55,6 +61,7 @@ export const scenes: Scene[] = [
     copy: "上階にひらく、森と眠るための部屋。",
     start: 0.73,
     end: 0.88,
+    anchor: 0.8,
   },
   {
     id: "night",
@@ -63,5 +70,6 @@ export const scenes: Scene[] = [
     copy: "夜の森に、建築の灯りが浮かび上がる。",
     start: 0.88,
     end: 1.0,
+    anchor: 0.925,
   },
 ];

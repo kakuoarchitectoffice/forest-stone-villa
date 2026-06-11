@@ -73,7 +73,7 @@ public/assets/images/poster-exterior-day.png           # fallback / source 用
 
 シーン位置は [src/data/scenes.ts](src/data/scenes.ts) で管理します。
 
-`start` と `end` は動画全体を `0.0` から `1.0` とした割合です。
+`start` と `end` は動画全体を `0.0` から `1.0` とした割合です。`anchor` は右ナビ、Prev / Next を押したときに移動する代表画角です。
 
 例:
 
@@ -82,8 +82,9 @@ public/assets/images/poster-exterior-day.png           # fallback / source 用
   id: "living",
   title: "LIVING",
   start: 0.25,
-  end: 0.38
+  end: 0.38,
+  anchor: 0.28
 }
 ```
 
-この場合、動画全体の25%から38%までが Living シーンとして扱われます。動画内容に合わせて `start` / `end` を調整すると、キャプション表示、縦ナビのハイライト、Prev / Next の移動先が同時に変わります。
+この場合、動画全体の25%から38%までが Living シーンとして扱われ、ボタン操作時は28%の画角へ移動します。動画内容に合わせて `start` / `end` を調整すると、キャプション表示と縦ナビのハイライトが変わります。ボタンで止めたい画角だけを変える場合は `anchor` を調整してください。

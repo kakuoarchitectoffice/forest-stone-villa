@@ -226,8 +226,7 @@ function App() {
       }
 
       const scene = scenes[boundedIndex];
-      const targetProgress =
-        boundedIndex === 0 ? scene.start : Math.min(scene.end, scene.start + 0.006);
+      const targetProgress = scene.anchor;
       scrollToY(getScrollTargetForProgress(targetProgress));
     },
     [getScrollTargetForProgress, prefersReducedMotion, scrollToY],
