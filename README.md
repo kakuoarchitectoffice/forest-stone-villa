@@ -48,23 +48,26 @@ npm を使う場合は、それぞれ `npm run dev`、`npm test`、`npm run buil
 
 ## 動画ファイルの差し替え
 
-差し替えたい動画を次のパスに配置します。
+PC向けは1080p、スマホ向けは720pの軽量版を読み分けます。差し替えたい動画を次のパスに配置します。
 
 ```text
-public/assets/videos/villa_walkthrough.mp4
+public/assets/videos/villa_walkthrough.mp4          # PC / tablet 用
+public/assets/videos/villa_walkthrough-mobile.mp4   # smartphone 用
 ```
 
-ファイル名を変える場合は、[src/App.tsx](src/App.tsx) の `videoSrc` を更新してください。
+ファイル名を変える場合は、[src/App.tsx](src/App.tsx) の `desktopVideoSrc` / `mobileVideoSrc` を更新してください。スクロール追従を滑らかにするため、H.264、30fps、`faststart`、1秒前後のキーフレーム間隔を推奨します。
 
 ## Poster画像の差し替え
 
-初期表示、`video` の `poster`、fallback 画像は次のファイルを使います。
+初期表示、`video` の `poster`、fallback 画像はWebPを優先して読み込みます。PNGは互換用の元画像として残しています。
 
 ```text
-public/assets/images/poster-exterior-day.png
+public/assets/images/poster-exterior-day.webp          # PC / tablet 用
+public/assets/images/poster-exterior-day-mobile.webp   # smartphone 用
+public/assets/images/poster-exterior-day.png           # fallback / source 用
 ```
 
-ファイル名を変える場合は、[src/App.tsx](src/App.tsx) の `posterSrc` を更新してください。
+ファイル名を変える場合は、[src/App.tsx](src/App.tsx) の `desktopPosterSrc` / `mobilePosterSrc` を更新してください。
 
 ## シーン時間の調整
 

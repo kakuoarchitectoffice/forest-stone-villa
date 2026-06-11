@@ -43,6 +43,28 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
+function useResponsiveAsset(desktopSrc: string, mobileSrc: string) {
+  const [useMobileAsset, setUseMobileAsset] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const updateAssetPreference = () => setUseMobileAsset(mediaQuery.matches);
+
+    updateAssetPreference();
+    mediaQuery.addEventListener("change", updateAssetPreference);
+
+    return () => mediaQuery.removeEventListener("change", updateAssetPreference);
+  }, []);
+
+  return useMobileAsset ? mobileSrc : desktopSrc;
+}
+
 function App() {
   const scrollAreaRef = useRef<HTMLElement | null>(null);
   const contactRef = useRef<HTMLElement | null>(null);
@@ -51,8 +73,18 @@ function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  const posterSrc = useMemo(() => assetPath("assets/images/poster-exterior-day.png"), []);
-  const videoSrc = useMemo(() => assetPath("assets/videos/villa_walkthrough.mp4"), []);
+  const desktopPosterSrc = useMemo(() => assetPath("assets/images/poster-exterior-day.webp"), []);
+  const mobilePosterSrc = useMemo(
+    () => assetPath("assets/images/poster-exterior-day-mobile.webp"),
+    [],
+  );
+  const desktopVideoSrc = useMemo(() => assetPath("assets/videos/villa_walkthrough.mp4"), []);
+  const mobileVideoSrc = useMemo(
+    () => assetPath("assets/videos/villa_walkthrough-mobile.mp4"),
+    [],
+  );
+  const posterSrc = useResponsiveAsset(desktopPosterSrc, mobilePosterSrc);
+  const videoSrc = useResponsiveAsset(desktopVideoSrc, mobileVideoSrc);
   const activeScene = scenes[activeIndex] ?? scenes[0];
 
   const updateProgress = useCallback((nextProgress: number) => {
