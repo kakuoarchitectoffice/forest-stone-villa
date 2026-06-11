@@ -12,10 +12,14 @@ import { scenes } from "./data/scenes";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SCRUB_HEIGHT_VH = 780;
+const SCRUB_LENGTH = 7.8;
 
 function assetPath(path: string) {
   return `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+}
+
+function getViewportHeight() {
+  return window.visualViewport?.height ?? window.innerHeight;
 }
 
 function getSceneIndex(progress: number) {
@@ -41,6 +45,39 @@ function usePrefersReducedMotion() {
   }, []);
 
   return prefersReducedMotion;
+}
+
+function useViewportHeightVariable() {
+  useEffect(() => {
+    let frameId: number | null = null;
+
+    const updateViewportHeight = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        document.documentElement.style.setProperty("--app-height", `${getViewportHeight()}px`);
+        ScrollTrigger.refresh();
+      });
+    };
+
+    updateViewportHeight();
+    window.addEventListener("resize", updateViewportHeight);
+    window.addEventListener("orientationchange", updateViewportHeight);
+    window.visualViewport?.addEventListener("resize", updateViewportHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateViewportHeight);
+      window.removeEventListener("orientationchange", updateViewportHeight);
+      window.visualViewport?.removeEventListener("resize", updateViewportHeight);
+
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, []);
 }
 
 function useResponsiveAsset(desktopSrc: string, mobileSrc: string) {
@@ -72,6 +109,8 @@ function App() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+
+  useViewportHeightVariable();
 
   const desktopPosterSrc = useMemo(() => assetPath("assets/images/poster-exterior-day.webp"), []);
   const mobilePosterSrc = useMemo(
@@ -153,7 +192,7 @@ function App() {
       return 0;
     }
 
-    const scrollableDistance = Math.max(0, scrollArea.offsetHeight - window.innerHeight);
+    const scrollableDistance = Math.max(0, scrollArea.offsetHeight - getViewportHeight());
     return scrollArea.offsetTop + scrollableDistance * Math.min(1, Math.max(0, targetProgress));
   }, []);
 
@@ -275,7 +314,7 @@ function App() {
           <section
             className="scroll-sequence"
             ref={scrollAreaRef}
-            style={{ minHeight: `${SCRUB_HEIGHT_VH}vh` }}
+            style={{ minHeight: `calc(var(--app-height) * ${SCRUB_LENGTH})` }}
             aria-label="Scroll controlled villa walkthrough"
           >
             <span className="scroll-progress" style={{ transform: `scaleY(${progress})` }} />

@@ -10,6 +10,7 @@
   --header-space: clamp(24px, 4vw, 64px);
   --side-space: clamp(24px, 6vw, 96px);
   --bottom-space: clamp(52px, 8vh, 98px);
+  --app-height: 100svh;
   font-family:
     "Hiragino Sans", "Yu Gothic", "YuGothic", "Helvetica Neue", Arial, sans-serif;
 }
@@ -19,6 +20,7 @@
 }
 
 html {
+  height: 100%;
   min-height: 100%;
   background: var(--background);
 }
@@ -28,8 +30,26 @@ body {
   min-height: 100%;
   margin: 0;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
   background: var(--background);
   color: var(--ink);
+}
+
+#root {
+  min-height: 100%;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
 }
 
 button,
@@ -46,7 +66,7 @@ a {
 }
 
 .app-shell {
-  min-height: 100vh;
+  min-height: var(--app-height);
   background: var(--background);
 }
 
@@ -57,7 +77,7 @@ a {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100%;
+  height: var(--app-height);
 }
 
 .video-stage {
@@ -301,7 +321,7 @@ a {
   top: 0;
   z-index: 5;
   width: 1px;
-  height: 100svh;
+  height: var(--app-height);
   background: linear-gradient(180deg, var(--stone), var(--moss));
   opacity: 0.76;
   pointer-events: none;
@@ -312,8 +332,7 @@ a {
   position: relative;
   z-index: 3;
   display: grid;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: var(--app-height);
   place-items: center;
   padding: clamp(64px, 10vw, 144px) var(--side-space);
   background:
@@ -390,8 +409,7 @@ a {
 
 .reduced-scene {
   display: grid;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: var(--app-height);
   align-content: end;
   padding: 0 var(--side-space) var(--bottom-space);
 }

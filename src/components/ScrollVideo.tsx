@@ -17,6 +17,10 @@ function clampProgress(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
+function getViewportHeight() {
+  return window.visualViewport?.height ?? window.innerHeight;
+}
+
 const MIN_SEEK_DELTA_SECONDS = 1 / 30;
 
 export function ScrollVideo({
@@ -64,7 +68,7 @@ export function ScrollVideo({
     };
 
     const getScrollProgress = () => {
-      const scrollableDistance = Math.max(0, scrollArea.offsetHeight - window.innerHeight);
+      const scrollableDistance = Math.max(0, scrollArea.offsetHeight - getViewportHeight());
 
       if (scrollableDistance === 0) {
         return 0;
