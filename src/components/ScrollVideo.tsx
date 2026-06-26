@@ -8,6 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 type ScrollVideoProps = {
   disabled: boolean;
   posterSrc: string;
+  preload: "auto" | "metadata";
   scrollAreaRef: RefObject<HTMLElement | null>;
   videoSrc: string;
   onProgressChange: (progress: number) => void;
@@ -21,11 +22,12 @@ function getViewportHeight() {
   return window.visualViewport?.height ?? window.innerHeight;
 }
 
-const MIN_SEEK_DELTA_SECONDS = 1 / 30;
+const MIN_SEEK_DELTA_SECONDS = 1 / 20;
 
 export function ScrollVideo({
   disabled,
   posterSrc,
+  preload,
   scrollAreaRef,
   videoSrc,
   onProgressChange,
@@ -97,15 +99,14 @@ export function ScrollVideo({
 
       const initialProgress = getScrollProgress();
       const initialTime = duration * initialProgress;
+      const playhead = { time: initialTime };
+
       onProgressChange(initialProgress);
       video.currentTime = initialTime;
-
-      const playhead = { time: initialTime };
 
       playheadTween = gsap.to(playhead, {
         time: duration,
         ease: "none",
-        paused: false,
         onUpdate: () => {
           if (Math.abs(video.currentTime - playhead.time) < MIN_SEEK_DELTA_SECONDS) {
             return;
@@ -122,7 +123,7 @@ export function ScrollVideo({
           trigger: scrollArea,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.18,
+          scrub: 0.28,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             onProgressChange(clampProgress(self.progress));
@@ -137,7 +138,6 @@ export function ScrollVideo({
       });
 
       trigger = playheadTween.scrollTrigger ?? null;
-
       ScrollTrigger.refresh();
     };
 
@@ -233,7 +233,7 @@ export function ScrollVideo({
         poster={posterSrc}
         muted
         playsInline
-        preload="auto"
+        preload={preload}
       />
       <img
         className={`poster-fallback${showPoster ? " is-visible" : ""}`}
