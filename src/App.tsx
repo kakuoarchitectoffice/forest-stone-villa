@@ -102,13 +102,48 @@ function useResponsiveAsset(desktopSrc: string, mobileSrc: string) {
   return useMobileAsset ? mobileSrc : desktopSrc;
 }
 
+function useDesktopVideoAsset() {
+  return useMemo(() => {
+    if (typeof window === "undefined") {
+      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15.mp4");
+    }
+
+    const navigatorWithDeviceMemory = window.navigator as Navigator & {
+      deviceMemory?: number;
+    };
+    const isMac = /Mac/i.test(window.navigator.platform);
+    const isSafari =
+      /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent) &&
+      !/CriOS|Chrome|Chromium|Edg/i.test(window.navigator.userAgent);
+    const deviceMemory = navigatorWithDeviceMemory.deviceMemory ?? 8;
+    const hardwareConcurrency = window.navigator.hardwareConcurrency ?? 8;
+    const width = window.innerWidth;
+    const dpr = window.devicePixelRatio ?? 1;
+
+    if (isSafari || (isMac && dpr >= 2) || width <= 1440) {
+      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1280-g15.mp4");
+    }
+
+    if (hardwareConcurrency >= 10 && deviceMemory >= 8) {
+      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15.mp4");
+    }
+
+    if (hardwareConcurrency >= 8 && deviceMemory >= 8) {
+      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15-crf21.mp4");
+    }
+
+    return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15-crf22.mp4");
+  }, []);
+}
+
 function App() {
   const scrollAreaRef = useRef<HTMLElement | null>(null);
   const contactRef = useRef<HTMLElement | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
+  const activeIndexRef = useRef(0);
+  const scrollTriggerUpdateQueuedRef = useRef(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
 
   useViewportHeightVariable();
 
@@ -117,18 +152,24 @@ function App() {
     () => assetPath("assets/images/poster-exterior-day-mobile.webp"),
     [],
   );
-  const desktopVideoSrc = useMemo(() => assetPath("assets/videos/villa_walkthrough.mp4"), []);
+  const desktopVideoSrc = useDesktopVideoAsset();
   const mobileVideoSrc = useMemo(
     () => assetPath("assets/videos/villa_walkthrough-mobile.mp4"),
     [],
   );
   const posterSrc = useResponsiveAsset(desktopPosterSrc, mobilePosterSrc);
   const videoSrc = useResponsiveAsset(desktopVideoSrc, mobileVideoSrc);
+  const videoPreload = useResponsiveAsset("auto", "metadata") as "auto" | "metadata";
   const activeScene = scenes[activeIndex] ?? scenes[0];
 
   const updateProgress = useCallback((nextProgress: number) => {
-    setProgress(nextProgress);
-    setActiveIndex(getSceneIndex(nextProgress));
+    document.documentElement.style.setProperty("--scroll-progress", String(nextProgress));
+
+    const nextIndex = getSceneIndex(nextProgress);
+    if (nextIndex !== activeIndexRef.current) {
+      activeIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
+    }
   }, []);
 
   useEffect(() => {
@@ -138,14 +179,24 @@ function App() {
 
     const lenis = new Lenis({
       smoothWheel: true,
-      lerp: 0.08,
+      lerp: 0.06,
     });
 
     const raf = (time: number) => {
       lenis.raf(time * 1000);
     };
 
-    lenis.on("scroll", ScrollTrigger.update);
+    lenis.on("scroll", () => {
+      if (scrollTriggerUpdateQueuedRef.current) {
+        return;
+      }
+
+      scrollTriggerUpdateQueuedRef.current = true;
+      window.requestAnimationFrame(() => {
+        scrollTriggerUpdateQueuedRef.current = false;
+        ScrollTrigger.update();
+      });
+    });
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
     lenisRef.current = lenis;
@@ -175,8 +226,12 @@ function App() {
 
         const target = visibleEntry.target as HTMLElement;
         const index = Number(target.dataset.sceneIndex);
+        activeIndexRef.current = index;
         setActiveIndex(index);
-        setProgress(scenes[index]?.start ?? 0);
+        document.documentElement.style.setProperty(
+          "--scroll-progress",
+          String(scenes[index]?.start ?? 0),
+        );
       },
       { threshold: [0.44, 0.62, 0.78] },
     );
@@ -269,6 +324,7 @@ function App() {
       <ScrollVideo
         disabled={prefersReducedMotion}
         posterSrc={posterSrc}
+        preload={videoPreload}
         scrollAreaRef={scrollAreaRef}
         videoSrc={videoSrc}
         onProgressChange={updateProgress}
@@ -316,7 +372,7 @@ function App() {
             style={{ minHeight: `calc(var(--app-height) * ${SCRUB_LENGTH})` }}
             aria-label="Scroll controlled villa walkthrough"
           >
-            <span className="scroll-progress" style={{ transform: `scaleY(${progress})` }} />
+            <span className="scroll-progress" />
           </section>
         )}
 

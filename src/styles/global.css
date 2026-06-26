@@ -11,6 +11,7 @@
   --side-space: clamp(24px, 6vw, 96px);
   --bottom-space: clamp(52px, 8vh, 98px);
   --app-height: 100svh;
+  --scroll-progress: 0;
   font-family:
     "Hiragino Sans", "Yu Gothic", "YuGothic", "Helvetica Neue", Arial, sans-serif;
 }
@@ -95,6 +96,19 @@ a {
 .scroll-video {
   z-index: 1;
   display: block;
+}
+
+.scroll-progress {
+  position: fixed;
+  right: clamp(16px, 3vw, 30px);
+  top: 0;
+  z-index: 6;
+  width: 2px;
+  height: 100vh;
+  transform-origin: center top;
+  transform: scaleY(var(--scroll-progress));
+  background: rgba(246, 242, 235, 0.78);
+  will-change: transform;
 }
 
 .poster-fallback {
@@ -313,19 +327,6 @@ a {
 .scroll-sequence {
   position: relative;
   width: 100%;
-}
-
-.scroll-progress {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 5;
-  width: 1px;
-  height: var(--app-height);
-  background: linear-gradient(180deg, var(--stone), var(--moss));
-  opacity: 0.76;
-  pointer-events: none;
-  transform-origin: top center;
 }
 
 .contact-section {
