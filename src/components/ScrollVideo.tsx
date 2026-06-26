@@ -33,6 +33,7 @@ export function ScrollVideo({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const frameRequestRef = useRef<number | null>(null);
   const initializedRef = useRef(false);
+  const renderedTimeRef = useRef(0);
   const targetTimeRef = useRef(0);
   const [hasFirstFrame, setHasFirstFrame] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
@@ -40,6 +41,8 @@ export function ScrollVideo({
   useEffect(() => {
     setHasFirstFrame(false);
     setHasVideoError(false);
+    initializedRef.current = false;
+    renderedTimeRef.current = 0;
     targetTimeRef.current = 0;
   }, [videoSrc]);
 
@@ -77,6 +80,48 @@ export function ScrollVideo({
       return clampProgress((window.scrollY - scrollArea.offsetTop) / scrollableDistance);
     };
 
+    const markFrameReady = () => {
+      setHasFirstFrame(true);
+    };
+
+    const flushPendingSeek = () => {
+      frameRequestRef.current = null;
+
+      if (hasVideoError || video.readyState < HTMLMediaElement.HAVE_METADATA) {
+        return;
+      }
+
+      const duration = video.duration || 0;
+      const safeTargetTime = Math.min(duration, Math.max(0, targetTimeRef.current));
+      if (!Number.isFinite(safeTargetTime)) {
+        return;
+      }
+
+      const currentRenderedTime = renderedTimeRef.current || video.currentTime;
+      const remainingDelta = safeTargetTime - currentRenderedTime;
+      let nextTime = safeTargetTime;
+
+      if (Math.abs(remainingDelta) >= MIN_SEEK_DELTA_SECONDS) {
+        const boundedStep =
+          Math.sign(remainingDelta) * Math.min(Math.abs(remainingDelta) * 0.28, 0.4);
+        nextTime = currentRenderedTime + boundedStep;
+      }
+
+      renderedTimeRef.current = nextTime;
+
+      if (Math.abs(video.currentTime - nextTime) >= MIN_SEEK_DELTA_SECONDS) {
+        try {
+          video.currentTime = nextTime;
+        } catch (error) {
+          console.warn("Unable to seek scroll video.", error);
+        }
+      }
+
+      if (Math.abs(safeTargetTime - nextTime) >= MIN_SEEK_DELTA_SECONDS) {
+        frameRequestRef.current = window.requestAnimationFrame(flushPendingSeek);
+      }
+    };
+
     const seekVideo = (targetTime: number) => {
       targetTimeRef.current = targetTime;
 
@@ -84,29 +129,7 @@ export function ScrollVideo({
         return;
       }
 
-      frameRequestRef.current = window.requestAnimationFrame(() => {
-        frameRequestRef.current = null;
-
-        if (!video || hasVideoError || video.readyState < HTMLMediaElement.HAVE_METADATA) {
-          return;
-        }
-
-        const safeTime = Math.min(video.duration || 0, Math.max(0, targetTimeRef.current));
-        if (
-          Number.isFinite(safeTime) &&
-          Math.abs(video.currentTime - safeTime) >= MIN_SEEK_DELTA_SECONDS
-        ) {
-          try {
-            video.currentTime = safeTime;
-          } catch (error) {
-            console.warn("Unable to seek scroll video.", error);
-          }
-        }
-      });
-    };
-
-    const markFrameReady = () => {
-      setHasFirstFrame(true);
+      frameRequestRef.current = window.requestAnimationFrame(flushPendingSeek);
     };
 
     const initializeScrollTrigger = () => {
@@ -125,8 +148,11 @@ export function ScrollVideo({
       video.pause();
 
       const initialProgress = getScrollProgress();
+      const initialTime = duration * initialProgress;
+      renderedTimeRef.current = initialTime;
+      targetTimeRef.current = initialTime;
       onProgressChange(initialProgress);
-      seekVideo(duration * initialProgress);
+      seekVideo(initialTime);
 
       trigger = ScrollTrigger.create({
         id: "villa-scroll-video",
@@ -136,6 +162,11 @@ export function ScrollVideo({
         scrub: true,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
+          const progress = clampProgress(self.progress);
+          onProgressChange(progress);
+          seekVideo(duration * progress);
+        },
+        onRefresh: (self) => {
           const progress = clampProgress(self.progress);
           onProgressChange(progress);
           seekVideo(duration * progress);
@@ -185,12 +216,21 @@ export function ScrollVideo({
       setHasVideoError(true);
     };
 
+    const handleSeeked = () => {
+      renderedTimeRef.current = video.currentTime;
+      markFrameReady();
+
+      if (Math.abs(targetTimeRef.current - video.currentTime) >= MIN_SEEK_DELTA_SECONDS) {
+        seekVideo(targetTimeRef.current);
+      }
+    };
+
     prepareVideoForMobile();
     video.addEventListener("loadedmetadata", initializeScrollTrigger);
     video.addEventListener("loadeddata", markFrameReady);
     video.addEventListener("canplay", markFrameReady);
     video.addEventListener("canplaythrough", markFrameReady);
-    video.addEventListener("seeked", markFrameReady);
+    video.addEventListener("seeked", handleSeeked);
     video.addEventListener("error", handleError);
     window.addEventListener("touchstart", primeVideoDecode, { passive: true });
     window.addEventListener("pointerdown", primeVideoDecode, { passive: true });
@@ -216,7 +256,7 @@ export function ScrollVideo({
       video.removeEventListener("loadeddata", markFrameReady);
       video.removeEventListener("canplay", markFrameReady);
       video.removeEventListener("canplaythrough", markFrameReady);
-      video.removeEventListener("seeked", markFrameReady);
+      video.removeEventListener("seeked", handleSeeked);
       video.removeEventListener("error", handleError);
       window.removeEventListener("touchstart", primeVideoDecode);
       window.removeEventListener("pointerdown", primeVideoDecode);
