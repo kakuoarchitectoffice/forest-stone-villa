@@ -12,7 +12,7 @@ export const ContactSection = forwardRef<HTMLElement>(function ContactSection(_,
           生成AIによるビジュアル提案から、建築・空間デザインの構想までご相談ください。
         </p>
         <a className="contact-section__button" href="https://www.kakuo.jp/contact/">
-          設計相談をする
+          お問い合わせ
         </a>
       </div>
     </section>
