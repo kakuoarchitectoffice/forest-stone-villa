@@ -11,9 +11,18 @@ export const ContactSection = forwardRef<HTMLElement>(function ContactSection(_,
           <br />
           生成AIによるビジュアル提案から、建築・空間デザインの構想までご相談ください。
         </p>
-        <a className="contact-section__button" href="https://www.kakuo.jp/contact/">
-          お問い合わせ
-        </a>
+        <div className="contact-section__actions">
+          <a className="contact-section__button" href="https://www.kakuo.jp/contact/">
+            お問い合わせ
+          </a>
+          <a
+            className="contact-section__button contact-section__button--secondary"
+            download
+            href={`${import.meta.env.BASE_URL}assets/documents/kakuo-ai-private-villa-presentation.pdf`}
+          >
+            資料ダウンロード
+          </a>
+        </div>
       </div>
     </section>
   );

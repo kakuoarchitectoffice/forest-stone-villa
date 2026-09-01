@@ -378,13 +378,20 @@ a {
   line-height: 2;
 }
 
+.contact-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 44px;
+}
+
 .contact-section__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 178px;
   min-height: 46px;
-  margin-top: 44px;
   border: 1px solid rgba(246, 242, 235, 0.38);
   color: var(--ink);
   font-size: 0.82rem;
@@ -401,6 +408,11 @@ a {
   border-color: var(--ink);
   background: rgba(246, 242, 235, 0.1);
   outline: none;
+}
+
+.contact-section__button--secondary {
+  border-color: rgba(246, 242, 235, 0.22);
+  color: var(--muted);
 }
 
 .reduced-sequence {
