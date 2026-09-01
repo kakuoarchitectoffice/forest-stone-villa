@@ -105,34 +105,21 @@ function useResponsiveAsset(desktopSrc: string, mobileSrc: string) {
 function useDesktopVideoAsset() {
   return useMemo(() => {
     if (typeof window === "undefined") {
-      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15.mp4");
+      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g8.mp4");
     }
 
-    const navigatorWithDeviceMemory = window.navigator as Navigator & {
-      deviceMemory?: number;
-    };
     const isMac = /Mac/i.test(window.navigator.platform);
     const isSafari =
       /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent) &&
       !/CriOS|Chrome|Chromium|Edg/i.test(window.navigator.userAgent);
-    const deviceMemory = navigatorWithDeviceMemory.deviceMemory ?? 8;
-    const hardwareConcurrency = window.navigator.hardwareConcurrency ?? 8;
     const width = window.innerWidth;
     const dpr = window.devicePixelRatio ?? 1;
 
     if (isSafari || (isMac && dpr >= 2) || width <= 1440) {
-      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1280-g15.mp4");
+      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1280-g8.mp4");
     }
 
-    if (hardwareConcurrency >= 10 && deviceMemory >= 8) {
-      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15.mp4");
-    }
-
-    if (hardwareConcurrency >= 8 && deviceMemory >= 8) {
-      return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15-crf21.mp4");
-    }
-
-    return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g15-crf22.mp4");
+    return assetPath("assets/videos/villa_walkthrough-desktop-hq-1440-g8.mp4");
   }, []);
 }
 
@@ -154,12 +141,11 @@ function App() {
   );
   const desktopVideoSrc = useDesktopVideoAsset();
   const mobileVideoSrc = useMemo(
-    () => assetPath("assets/videos/villa_walkthrough-mobile.mp4"),
+    () => assetPath("assets/videos/villa_walkthrough-mobile-hq-g8.mp4"),
     [],
   );
   const posterSrc = useResponsiveAsset(desktopPosterSrc, mobilePosterSrc);
   const videoSrc = useResponsiveAsset(desktopVideoSrc, mobileVideoSrc);
-  const videoPreload = useResponsiveAsset("auto", "metadata") as "auto" | "metadata";
   const activeScene = scenes[activeIndex] ?? scenes[0];
 
   const updateProgress = useCallback((nextProgress: number) => {
@@ -324,7 +310,7 @@ function App() {
       <ScrollVideo
         disabled={prefersReducedMotion}
         posterSrc={posterSrc}
-        preload={videoPreload}
+        preload="auto"
         scrollAreaRef={scrollAreaRef}
         videoSrc={videoSrc}
         onProgressChange={updateProgress}
