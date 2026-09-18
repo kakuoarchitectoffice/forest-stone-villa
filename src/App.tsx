@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ContactSection } from "./components/ContactSection";
 import { Header } from "./components/Header";
 import { PrevNextControls } from "./components/PrevNextControls";
-import { SceneCaption } from "./components/SceneCaption";
+import { ContactDetails, SceneCaption } from "./components/SceneCaption";
 import { SceneNavigation } from "./components/SceneNavigation";
 import { ScrollVideo } from "./components/ScrollVideo";
 import { scenes } from "./data/scenes";
@@ -133,6 +133,21 @@ function App() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useViewportHeightVariable();
+
+  useEffect(() => {
+    const contact = contactRef.current;
+    if (!contact) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => document.documentElement.classList.toggle("in-contact", entry.isIntersecting),
+      { rootMargin: "0px 0px -20% 0px", threshold: 0 },
+    );
+    observer.observe(contact);
+    return () => {
+      observer.disconnect();
+      document.documentElement.classList.remove("in-contact");
+    };
+  }, []);
+
 
   const desktopPosterSrc = useMemo(() => assetPath("assets/images/poster-exterior-day.webp"), []);
   const mobilePosterSrc = useMemo(
@@ -320,7 +335,7 @@ function App() {
       <Header />
 
       {!prefersReducedMotion && (
-        <SceneCaption scene={activeScene} index={activeIndex} total={scenes.length} />
+        <SceneCaption scene={activeScene} index={activeIndex} total={scenes.length + 1} />
       )}
 
       <SceneNavigation
@@ -345,9 +360,10 @@ function App() {
                 id={`reduced-${scene.id}`}
                 key={scene.id}
               >
-                <p>{String(index + 1).padStart(2, "0")} / 07</p>
+                <p>{String(index + 1).padStart(2, "0")} / 08</p>
                 <h1>{scene.title}</h1>
                 <span>{scene.copy}</span>
+                {scene.id === "night" && <ContactDetails />}
               </section>
             ))}
           </div>
@@ -362,7 +378,7 @@ function App() {
           </section>
         )}
 
-        <ContactSection ref={contactRef} />
+        <ContactSection ref={contactRef} onBackToTop={() => scrollToScene(0)} />
       </main>
     </div>
   );
