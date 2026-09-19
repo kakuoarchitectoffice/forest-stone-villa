@@ -67,7 +67,7 @@ export const scenes: Scene[] = [
     id: "night",
     label: "お問い合わせ",
     title: "ご相談は、\nKAKUO AIへ。",
-    copy: "KAKUO AI 株式会社\n東京・代官山",
+    copy: "KAKUO AI 株式会社\n東京都渋谷区代官山町20-23\nフォレストゲート代官山3F",
     start: 0.88,
     end: 1.0,
     anchor: 0.925,

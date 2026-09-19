@@ -10,7 +10,7 @@ export function ContactDetails() {
 }
 
 export function SceneCaption({ scene, index, total }: SceneCaptionProps) {
-  return <section className="scene-caption" aria-live="polite" key={scene.id}>
+  return <section className={`scene-caption${scene.id === "night" ? " scene-caption--contact" : ""}`} aria-live="polite" key={scene.id}>
     <p className="scene-caption__count">{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</p>
     <h1>{scene.title}</h1>
     <div className="scene-caption__body">
