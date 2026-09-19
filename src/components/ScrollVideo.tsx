@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SEEK_EPSILON, smoothVideoTime, videoTimeForProgress } from "../lib/videoScrub";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -22,8 +23,6 @@ function clampProgress(value: number) {
 function getViewportHeight() {
   return window.visualViewport?.height ?? window.innerHeight;
 }
-
-const MIN_SEEK_DELTA_SECONDS = 1 / 30;
 
 export function ScrollVideo({
   disabled,
@@ -59,9 +58,11 @@ export function ScrollVideo({
     let trigger: ScrollTrigger | null = null;
     let isPrimingVideo = false;
     let didPrimeVideo = false;
-    let isSeeking = false;
     let seekFrameId: number | null = null;
     let requestedTime: number | null = null;
+    let smoothedTime = video.currentTime;
+    let lastFrameTime: number | null = null;
+    let disposed = false;
 
     const prepareVideoForMobile = () => {
       video.muted = true;
@@ -94,32 +95,40 @@ export function ScrollVideo({
       setHasFirstFrame(true);
     };
 
-    const flushSeek = () => {
+    const flushSeek = (now: number) => {
       seekFrameId = null;
 
-      if (isSeeking || requestedTime === null) {
+      if (disposed || requestedTime === null || document.hidden) {
+        lastFrameTime = null;
         return;
       }
 
-      const targetTime = requestedTime;
-      if (Math.abs(video.currentTime - targetTime) < MIN_SEEK_DELTA_SECONDS) {
-        return;
+      const elapsed = lastFrameTime === null ? 1000 / 60 : now - lastFrameTime;
+      lastFrameTime = now;
+      smoothedTime = smoothVideoTime(smoothedTime, requestedTime, elapsed);
+
+      // Only one decode at a time. Read the browser's actual state rather than
+      // holding a lock that can remain stuck after a missed seeked event.
+      if (!video.seeking && video.readyState >= HTMLMediaElement.HAVE_METADATA &&
+          Math.abs(video.currentTime - smoothedTime) >= SEEK_EPSILON) {
+        try {
+          video.currentTime = smoothedTime;
+        } catch (error) {
+          console.warn("Unable to seek scroll video.", error);
+        }
       }
 
-      isSeeking = true;
-
-      try {
-        video.currentTime = targetTime;
-      } catch (error) {
-        isSeeking = false;
-        console.warn("Unable to seek scroll video.", error);
+      if (video.seeking || Math.abs(video.currentTime - requestedTime) >= SEEK_EPSILON) {
+        seekFrameId = window.requestAnimationFrame(flushSeek);
+      } else {
+        lastFrameTime = null;
       }
     };
 
     const requestSeek = (nextTime: number) => {
       requestedTime = nextTime;
 
-      if (seekFrameId !== null || isSeeking) {
+      if (seekFrameId !== null || disposed || document.hidden) {
         return;
       }
 
@@ -127,7 +136,6 @@ export function ScrollVideo({
     };
 
     const handleSeeked = () => {
-      isSeeking = false;
       markFrameReady();
       requestSeek(requestedTime ?? video.currentTime);
     };
@@ -140,7 +148,8 @@ export function ScrollVideo({
         seekFrameId = null;
       }
 
-      isSeeking = false;
+      smoothedTime = 0;
+      lastFrameTime = null;
       video.pause();
 
       try {
@@ -172,7 +181,8 @@ export function ScrollVideo({
       const initialProgress = getScrollProgress();
 
       onProgressChange(initialProgress);
-      requestSeek(duration * initialProgress);
+      smoothedTime = videoTimeForProgress(duration, initialProgress);
+      requestSeek(smoothedTime);
 
       trigger = ScrollTrigger.create({
         id: "villa-scroll-video",
@@ -183,12 +193,12 @@ export function ScrollVideo({
         onUpdate: (self) => {
           const progress = clampProgress(self.progress);
           onProgressChange(progress);
-          requestSeek(duration * progress);
+          requestSeek(videoTimeForProgress(duration, progress));
         },
         onRefresh: (self) => {
           const progress = clampProgress(self.progress);
           onProgressChange(progress);
-          requestSeek(duration * progress);
+          requestSeek(videoTimeForProgress(duration, progress));
         },
       });
 
@@ -220,6 +230,7 @@ export function ScrollVideo({
 
       playPromise
         .then(() => {
+          if (disposed) return;
           video.pause();
           isPrimingVideo = false;
           didPrimeVideo = true;
@@ -235,6 +246,16 @@ export function ScrollVideo({
       setHasVideoError(true);
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (seekFrameId !== null) window.cancelAnimationFrame(seekFrameId);
+        seekFrameId = null;
+        lastFrameTime = null;
+      } else if (Number.isFinite(video.duration)) {
+        requestSeek(videoTimeForProgress(video.duration, getScrollProgress()));
+      }
+    };
+
     prepareVideoForMobile();
     video.addEventListener("loadedmetadata", initializeScrollTrigger);
     video.addEventListener("loadeddata", markFrameReady);
@@ -242,6 +263,7 @@ export function ScrollVideo({
     video.addEventListener("canplaythrough", markFrameReady);
     video.addEventListener("seeked", handleSeeked);
     video.addEventListener("error", handleError);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("touchstart", primeVideoDecode, { passive: true });
     window.addEventListener("pointerdown", primeVideoDecode, { passive: true });
     window.addEventListener("scroll", primeVideoDecode, { passive: true });
@@ -261,6 +283,7 @@ export function ScrollVideo({
     }
 
     return () => {
+      disposed = true;
       resetToStartRef.current = () => undefined;
       initializedRef.current = false;
       video.removeEventListener("loadedmetadata", initializeScrollTrigger);
@@ -269,6 +292,7 @@ export function ScrollVideo({
       video.removeEventListener("canplaythrough", markFrameReady);
       video.removeEventListener("seeked", handleSeeked);
       video.removeEventListener("error", handleError);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("touchstart", primeVideoDecode);
       window.removeEventListener("pointerdown", primeVideoDecode);
       window.removeEventListener("scroll", primeVideoDecode);

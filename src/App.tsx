@@ -50,15 +50,29 @@ function usePrefersReducedMotion() {
 function useViewportHeightVariable() {
   useEffect(() => {
     let frameId: number | null = null;
+    let previousWidth = 0;
+    let previousHeight = 0;
 
     const updateViewportHeight = () => {
+      const width = window.innerWidth;
+      const height = getViewportHeight();
+      // Keep the scroll timeline stable when mobile browser chrome expands.
+      // A rotation (width change) or a substantial resize still rebuilds it.
+      const toolbarResize = window.matchMedia("(pointer: coarse)").matches &&
+        width === previousWidth && previousHeight > 0 &&
+        Math.abs(height - previousHeight) < previousHeight * 0.25;
+      if (toolbarResize || (width === previousWidth && height === previousHeight)) {
+        return;
+      }
       if (frameId !== null) {
         return;
       }
 
       frameId = window.requestAnimationFrame(() => {
         frameId = null;
-        document.documentElement.style.setProperty("--app-height", `${getViewportHeight()}px`);
+        previousWidth = window.innerWidth;
+        previousHeight = getViewportHeight();
+        document.documentElement.style.setProperty("--app-height", `${previousHeight}px`);
         ScrollTrigger.refresh();
       });
     };
@@ -128,7 +142,6 @@ function App() {
   const contactRef = useRef<HTMLElement | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const activeIndexRef = useRef(0);
-  const scrollTriggerUpdateQueuedRef = useRef(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoResetSignal, setVideoResetSignal] = useState(0);
@@ -188,17 +201,8 @@ function App() {
       lenis.raf(time * 1000);
     };
 
-    lenis.on("scroll", () => {
-      if (scrollTriggerUpdateQueuedRef.current) {
-        return;
-      }
-
-      scrollTriggerUpdateQueuedRef.current = true;
-      window.requestAnimationFrame(() => {
-        scrollTriggerUpdateQueuedRef.current = false;
-        ScrollTrigger.update();
-      });
-    });
+    // Lenis already emits from its animation frame; avoid another frame of lag.
+    lenis.on("scroll", () => ScrollTrigger.update());
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
     lenisRef.current = lenis;
