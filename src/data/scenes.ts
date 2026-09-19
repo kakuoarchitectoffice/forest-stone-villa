@@ -47,9 +47,9 @@ export const scenes: Scene[] = [
   },
   {
     id: "bathroom",
-    label: "協業",
-    title: "建築から、\n商品デザインまで。",
-    copy: "設計・不動産・メーカーなど、\n幅広い分野と協業します。",
+    label: "提案領域",
+    title: "AIで広がる、\nデザイン提案。",
+    copy: "建築・カタログ・新商品など、\nさまざまな分野をご提案します。",
     start: 0.56,
     end: 0.73,
     anchor: 0.61,

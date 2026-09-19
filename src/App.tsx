@@ -338,6 +338,14 @@ function App() {
         <SceneCaption scene={activeScene} index={activeIndex} total={scenes.length + 1} />
       )}
 
+      {!prefersReducedMotion && (
+        <div className="scroll-cue" aria-hidden="true">
+          <span className="scroll-cue__label">下へスクロール</span>
+          <span className="scroll-cue__line" />
+          <span className="scroll-cue__arrow">⌄</span>
+        </div>
+      )}
+
       <SceneNavigation
         activeIndex={activeIndex}
         scenes={scenes}
