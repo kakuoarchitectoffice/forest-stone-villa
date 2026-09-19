@@ -11,6 +11,7 @@ type ScrollVideoProps = {
   preload: "auto" | "metadata";
   scrollAreaRef: RefObject<HTMLElement | null>;
   videoSrc: string;
+  resetSignal: number;
   onProgressChange: (progress: number) => void;
 };
 
@@ -30,11 +31,13 @@ export function ScrollVideo({
   preload,
   scrollAreaRef,
   videoSrc,
+  resetSignal,
   onProgressChange,
 }: ScrollVideoProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const initializedRef = useRef(false);
   const hasFirstFrameRef = useRef(false);
+  const resetToStartRef = useRef<() => void>(() => undefined);
   const [hasFirstFrame, setHasFirstFrame] = useState(false);
   const [hasVideoError, setHasVideoError] = useState(false);
 
@@ -128,6 +131,28 @@ export function ScrollVideo({
       markFrameReady();
       requestSeek(requestedTime ?? video.currentTime);
     };
+
+    const resetToStart = () => {
+      requestedTime = 0;
+
+      if (seekFrameId !== null) {
+        window.cancelAnimationFrame(seekFrameId);
+        seekFrameId = null;
+      }
+
+      isSeeking = false;
+      video.pause();
+
+      try {
+        video.currentTime = 0;
+        onProgressChange(0);
+      } catch (error) {
+        requestSeek(0);
+        console.warn("Unable to reset scroll video.", error);
+      }
+    };
+
+    resetToStartRef.current = resetToStart;
 
     const initializeScrollTrigger = () => {
       if (initializedRef.current) {
@@ -236,6 +261,7 @@ export function ScrollVideo({
     }
 
     return () => {
+      resetToStartRef.current = () => undefined;
       initializedRef.current = false;
       video.removeEventListener("loadedmetadata", initializeScrollTrigger);
       video.removeEventListener("loadeddata", markFrameReady);
@@ -252,6 +278,14 @@ export function ScrollVideo({
       trigger?.kill();
     };
   }, [disabled, hasVideoError, onProgressChange, scrollAreaRef, videoSrc]);
+
+  useEffect(() => {
+    if (resetSignal === 0 || disabled) {
+      return;
+    }
+
+    resetToStartRef.current();
+  }, [disabled, resetSignal]);
 
   const showPoster = disabled || !hasFirstFrame || hasVideoError;
 

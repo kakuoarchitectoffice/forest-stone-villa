@@ -131,6 +131,7 @@ function App() {
   const scrollTriggerUpdateQueuedRef = useRef(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [videoResetSignal, setVideoResetSignal] = useState(0);
 
   useViewportHeightVariable();
 
@@ -320,6 +321,34 @@ function App() {
     scrollToScene(activeIndex + 1);
   }, [activeIndex, scrollToContact, scrollToScene]);
 
+  const handleBackToTop = useCallback(() => {
+    if (prefersReducedMotion) {
+      scrollToScene(0);
+      return;
+    }
+
+    ScrollTrigger.refresh();
+    const targetY = getScrollTargetForProgress(0);
+
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(targetY, {
+        immediate: true,
+        force: true,
+      });
+    } else {
+      window.scrollTo({ top: targetY, left: 0, behavior: "auto" });
+    }
+
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
+    updateProgress(0);
+    setVideoResetSignal((signal) => signal + 1);
+
+    window.requestAnimationFrame(() => {
+      ScrollTrigger.update();
+    });
+  }, [getScrollTargetForProgress, prefersReducedMotion, scrollToScene, updateProgress]);
+
   return (
     <div className={`app-shell${prefersReducedMotion ? " is-reduced-motion" : ""}`}>
       <ScrollVideo
@@ -328,6 +357,7 @@ function App() {
         preload="auto"
         scrollAreaRef={scrollAreaRef}
         videoSrc={videoSrc}
+        resetSignal={videoResetSignal}
         onProgressChange={updateProgress}
       />
 
@@ -386,7 +416,7 @@ function App() {
           </section>
         )}
 
-        <ContactSection ref={contactRef} onBackToTop={() => scrollToScene(0)} />
+        <ContactSection ref={contactRef} onBackToTop={handleBackToTop} />
       </main>
     </div>
   );
