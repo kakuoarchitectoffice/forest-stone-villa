@@ -9,7 +9,7 @@ export const ContactSection = forwardRef<HTMLElement, ContactSectionProps>(funct
       <h2 id="contact-heading">{"まずは、\nご相談ください。"}</h2>
       <p>ご相談内容が決まっていなくても、お気軽にお問い合わせください。</p>
       <div className="contact-section__actions">
-        <a className="contact-section__button" download href={`${import.meta.env.BASE_URL}assets/documents/kakuo-ai-private-villa-presentation.pdf`}>資料ダウンロード</a>
+        <a className="contact-section__button" download="KAKUO AI Company Profile.pdf" href={`${import.meta.env.BASE_URL}assets/documents/KAKUO%20AI%20Company%20Profile.pdf`}>資料ダウンロード</a>
         <a className="contact-section__button contact-section__button--secondary" href="https://www.kakuo.jp/contact/" target="_blank" rel="noopener noreferrer">お問い合わせ</a>
       </div>
       <a className="contact-section__parent" href="https://kakuo.jp/concept" target="_blank" rel="noopener noreferrer">カクオ・アーキテクト・オフィス ↗</a>
